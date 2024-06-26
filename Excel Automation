@@ -1,0 +1,46 @@
+Sub ScrapeAmazonData()
+    Dim bot As New WebDriver
+    Dim url As String
+    Dim asins As Variant
+    Dim rowNum As Integer
+    Dim ws As Worksheet
+    
+    Set ws = ThisWorkbook.Sheets("Sheet1") ' Update sheet name as needed
+    asins = ws.Range("A2:A100").Value ' Range where ASIN codes are stored
+    
+    bot.Start "chrome", "about:blank"
+    bot.Get "https://www.amazon.in" ' Opening Amazon India site
+    
+    For rowNum = LBound(asins, 1) To UBound(asins, 1)
+        url = "https://www.amazon.in/dp/" & asins(rowNum, 1)
+        bot.Get url
+        
+        ' Wait for the page to load
+        bot.Wait 1000
+        
+        ' Extracting product details
+        Dim title As String
+        Dim brand As String
+        Dim price As String
+        
+        title = bot.FindElementById("productTitle").Text
+        brand = Split(title, " ")(0) ' Extracting brand from the title
+        price = bot.FindElementByClass("a-price-whole").Text
+        
+        ' Outputting data to Excel
+        ws.Cells(rowNum + 1, 2).Value = title
+        ws.Cells(rowNum + 1, 3).Value = brand
+        ws.Cells(rowNum + 1, 4).Value = price
+        
+        ' Clearing variables
+        title = ""
+        brand = ""
+        price = ""
+    Next rowNum
+    
+    bot.Quit
+    Set bot = Nothing
+    
+    MsgBox "Data scraping complete!", vbInformation
+End Sub
+
